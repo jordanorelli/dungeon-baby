@@ -4,6 +4,10 @@ using UnityEngine;
 
 [RequireComponent(typeof(MoveController))]
 public class PlayerController : MonoBehaviour {
+
+    public float gravity = -20f;
+
+    private Vector3 velocity;
     private MoveController moveController;
 
     void Start() {
@@ -11,6 +15,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        velocity.y += gravity * Time.deltaTime;
+        moveController.Move(velocity * Time.deltaTime);
     }
 
     void FixedUpdate() {
