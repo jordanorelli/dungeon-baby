@@ -38,7 +38,7 @@ public class PlayerController : MonoBehaviour {
         }
 
         float targetX = input.x * moveSpeed;
-        if (moveController.collisions.below) {
+        if (moveController.isGrounded) {
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
         } else {
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);

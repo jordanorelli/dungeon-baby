@@ -623,18 +623,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4623847142764859891, guid: b29a944aaba25f643afdc6b049845662,
         type: 3}
-      propertyPath: timeToJumpApex
-      value: 0.97
-      objectReference: {fileID: 0}
-    - target: {fileID: 4623847142764859891, guid: b29a944aaba25f643afdc6b049845662,
-        type: 3}
-      propertyPath: maxFallSpeed
-      value: -20
-      objectReference: {fileID: 0}
-    - target: {fileID: 4623847142764859892, guid: b29a944aaba25f643afdc6b049845662,
-        type: 3}
-      propertyPath: collisionMask.m_Bits
-      value: 1024
+      propertyPath: timeToMaxRunSpeed
+      value: 0.15
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b29a944aaba25f643afdc6b049845662, type: 3}

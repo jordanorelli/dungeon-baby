@@ -19,6 +19,10 @@ public class MoveController : MonoBehaviour
     new BoxCollider2D collider;
     RaycastOrigins raycastOrigins;
 
+    public bool isGrounded {
+        get => collisions.below;
+    }
+
     void Start() {
         collider = GetComponent<BoxCollider2D>();
         CalculateRaySpacing();
