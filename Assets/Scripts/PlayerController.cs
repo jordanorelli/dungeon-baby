@@ -16,6 +16,13 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        if (moveController.collisions.below || moveController.collisions.above) {
+            velocity.y = 0;
+        }
+        if (moveController.collisions.left || moveController.collisions.right) {
+            velocity.x = 0;
+        }
+
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         velocity.x = input.x * moveSpeed;
         velocity.y += gravity * Time.deltaTime;

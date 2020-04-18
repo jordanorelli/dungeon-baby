@@ -11,6 +11,7 @@ public class MoveController : MonoBehaviour
     public int horizontalRayCount = 4;
     public int verticalRayCount = 4;
     public LayerMask collisionMask;
+    public CollisionInfo collisions;
 
     private float horizontalRaySpacing;
     private float verticalRaySpacing;
@@ -25,6 +26,8 @@ public class MoveController : MonoBehaviour
 
     public void Move(Vector3 velocity) {
         UpdateRaycastOrigins();
+        collisions.Reset();
+
         if (velocity.x != 0) {
             HorizontalCollisions(ref velocity);
         }
@@ -45,6 +48,11 @@ public class MoveController : MonoBehaviour
             Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
             if (hit) {
+                if (directionY > 0) {
+                    collisions.above = true;
+                } else {
+                    collisions.below = true;
+                }
                 velocity.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;
             }
@@ -62,6 +70,11 @@ public class MoveController : MonoBehaviour
             Debug.DrawRay(rayOrigin, Vector2.right * directionX * rayLength, Color.red);
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
             if (hit) {
+                if (directionX > 0) {
+                    collisions.right = true;
+                } else {
+                    collisions.left = true;
+                }
                 velocity.x = (hit.distance - skinWidth) * directionX;
                 rayLength = hit.distance;
             }
@@ -98,5 +111,19 @@ public class MoveController : MonoBehaviour
         public Vector2 topRight;
         public Vector2 bottomLeft;
         public Vector2 bottomRight;
+    }
+
+    public struct CollisionInfo {
+        public bool above;
+        public bool below;
+        public bool left;
+        public bool right;
+
+        public void Reset() {
+            above = false;
+            below = false;
+            left = false;
+            right = false;
+        }
     }
 }
