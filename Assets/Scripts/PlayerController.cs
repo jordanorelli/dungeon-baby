@@ -4,7 +4,6 @@ using UnityEngine;
 
 [RequireComponent(typeof(MoveController))]
 public class PlayerController : MonoBehaviour {
-
     public float jumpHeight = 4f;
     public float timeToJumpApex = 0.4f;
     public float moveSpeed = 6f;
@@ -25,29 +24,32 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
-        if (moveController.collisions.below || moveController.collisions.above) {
+        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        float targetX = input.x * moveSpeed;
+
+        if (moveController.collisions.above) {
             velocity.y = 0;
         }
+
         if (moveController.collisions.left || moveController.collisions.right) {
             velocity.x = 0;
         }
 
-        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        if (Input.GetKeyDown(KeyCode.Space) && moveController.collisions.below) {
-            velocity.y = jumpVelocity;
-        }
-
-        float targetX = input.x * moveSpeed;
         if (moveController.isGrounded) {
+            if (Input.GetButton("Jump")) {
+                velocity.y = jumpVelocity;
+            } else {
+                velocity.y = 0;
+            }
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
         } else {
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            velocity.y += gravity * Time.deltaTime;
+            if (velocity.y < maxFallSpeed) {
+                velocity.y = maxFallSpeed;
+            }
         }
 
-        velocity.y += gravity * Time.deltaTime;
-        if (velocity.y < maxFallSpeed) {
-            velocity.y = maxFallSpeed;
-        }
         moveController.Move(velocity * Time.deltaTime);
     }
 
