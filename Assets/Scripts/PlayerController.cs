@@ -6,6 +6,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour {
 
     public float gravity = -20f;
+    public float moveSpeed = 6f;
 
     private Vector3 velocity;
     private MoveController moveController;
@@ -15,6 +16,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        velocity.x = input.x * moveSpeed;
         velocity.y += gravity * Time.deltaTime;
         moveController.Move(velocity * Time.deltaTime);
     }

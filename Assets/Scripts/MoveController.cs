@@ -25,7 +25,12 @@ public class MoveController : MonoBehaviour
 
     public void Move(Vector3 velocity) {
         UpdateRaycastOrigins();
-        VerticalCollisions(ref velocity);
+        if (velocity.x != 0) {
+            HorizontalCollisions(ref velocity);
+        }
+        if (velocity.y != 0) {
+            VerticalCollisions(ref velocity);
+        }
         transform.Translate(velocity);
     }
 
@@ -37,13 +42,29 @@ public class MoveController : MonoBehaviour
             Vector2 rayOrigin = (directionY > 0) ? raycastOrigins.topLeft : raycastOrigins.bottomLeft;
             rayOrigin += Vector2.right * (verticalRaySpacing * i + velocity.x);
 
+            Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
             if (hit) {
                 velocity.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;
             }
+        }
+    }
 
-            Debug.DrawRay(raycastOrigins.bottomLeft + Vector2.right * verticalRaySpacing * i, Vector2.up * -2, Color.red);
+    private void HorizontalCollisions(ref Vector3 velocity) {
+        float directionX = Mathf.Sign(velocity.x); // -1 for left, 1 for right
+        float rayLength = Mathf.Abs(velocity.x) + skinWidth;
+
+        for (int i = 0; i < horizontalRayCount; i++) {
+            Vector2 rayOrigin = (directionX > 0) ? raycastOrigins.bottomRight : raycastOrigins.bottomLeft;
+            rayOrigin += Vector2.up * (horizontalRaySpacing * i);
+
+            Debug.DrawRay(rayOrigin, Vector2.right * directionX * rayLength, Color.red);
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
+            if (hit) {
+                velocity.x = (hit.distance - skinWidth) * directionX;
+                rayLength = hit.distance;
+            }
         }
     }
 
