@@ -5,14 +5,19 @@ using UnityEngine;
 [RequireComponent(typeof(MoveController))]
 public class PlayerController : MonoBehaviour {
 
-    public float gravity = -20f;
+    public float jumpHeight = 4f;
+    public float timeToJumpApex = 0.4f;
     public float moveSpeed = 6f;
 
+    private float jumpVelocity = 8f;
+    private float gravity = -20f;
     private Vector3 velocity;
     private MoveController moveController;
 
     void Start() {
         moveController = GetComponent<MoveController>();
+        gravity = -(2* jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
+        jumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
     }
 
     void Update() {
@@ -24,6 +29,9 @@ public class PlayerController : MonoBehaviour {
         }
 
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        if (Input.GetKeyDown(KeyCode.Space) && moveController.collisions.below) {
+            velocity.y = jumpVelocity;
+        }
         velocity.x = input.x * moveSpeed;
         velocity.y += gravity * Time.deltaTime;
         moveController.Move(velocity * Time.deltaTime);
