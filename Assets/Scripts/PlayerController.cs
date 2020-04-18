@@ -8,11 +8,15 @@ public class PlayerController : MonoBehaviour {
     public float jumpHeight = 4f;
     public float timeToJumpApex = 0.4f;
     public float moveSpeed = 6f;
+    public float maxFallSpeed = -20f;
+    public float timeToMaxRunSpeed = 0.15f;
+    public float timeToMaxAirmoveSpeed = 0.25f;
 
     private float jumpVelocity = 8f;
     private float gravity = -20f;
     private Vector3 velocity;
     private MoveController moveController;
+    private float velocityXSmoothing;
 
     void Start() {
         moveController = GetComponent<MoveController>();
@@ -32,8 +36,18 @@ public class PlayerController : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Space) && moveController.collisions.below) {
             velocity.y = jumpVelocity;
         }
-        velocity.x = input.x * moveSpeed;
+
+        float targetX = input.x * moveSpeed;
+        if (moveController.collisions.below) {
+            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
+        } else {
+            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+        }
+
         velocity.y += gravity * Time.deltaTime;
+        if (velocity.y < maxFallSpeed) {
+            velocity.y = maxFallSpeed;
+        }
         moveController.Move(velocity * Time.deltaTime);
     }
 
