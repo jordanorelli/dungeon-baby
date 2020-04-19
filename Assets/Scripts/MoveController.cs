@@ -38,6 +38,7 @@ public class MoveController : MonoBehaviour
         if (velocity.y != 0) {
             VerticalCollisions(ref velocity);
         }
+        Debug.LogFormat("Moving x: {0} y: {1}", velocity.x, velocity.y);
         transform.Translate(velocity);
     }
 
@@ -52,9 +53,11 @@ public class MoveController : MonoBehaviour
             Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
             if (hit) {
+                Debug.LogFormat("Vertical Hit with distance: {0}", hit.distance);
                 if (directionY > 0) {
                     collisions.above = true;
                 } else {
+                    Debug.LogFormat("Hit is below: we are now grounded");
                     collisions.below = true;
                 }
                 velocity.y = (hit.distance - skinWidth) * directionY;
@@ -87,7 +90,7 @@ public class MoveController : MonoBehaviour
 
     void UpdateRaycastOrigins() {
         Bounds bounds = collider.bounds;
-        bounds.Expand(skinWidth * -2);
+        bounds.Expand(skinWidth * -2f);
 
         raycastOrigins.bottomLeft = new Vector2(bounds.min.x, bounds.min.y);
         raycastOrigins.bottomRight = new Vector2(bounds.max.x, bounds.min.y);

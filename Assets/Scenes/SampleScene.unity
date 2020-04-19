@@ -498,7 +498,7 @@ PrefabInstance:
     - target: {fileID: 4296878337294020286, guid: 19980a8ce8df64b4cbc7cf51fcc077e2,
         type: 3}
       propertyPath: m_Name
-      value: Left Status Display
+      value: Player Status Display
       objectReference: {fileID: 0}
     - target: {fileID: 6864253409301352422, guid: 19980a8ce8df64b4cbc7cf51fcc077e2,
         type: 3}

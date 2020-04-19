@@ -22,18 +22,18 @@ public class MoveControllerDebugDisplay : MonoBehaviour {
     // Update is called once per frame
     void Update() {
         if (moveController) {
-            if (moveController.collisions.above) {
-                aboveDisplay.text = "True";
-            } else {
-                aboveDisplay.text = "False";
-            }
+            showBool(aboveDisplay, moveController.collisions.above);
+            showBool(belowDisplay, moveController.collisions.below);
+            showBool(leftDisplay, moveController.collisions.left);
+            showBool(rightDisplay, moveController.collisions.right);
+        }
+    }
 
-            if (moveController.collisions.below) {
-                belowDisplay.text = "True";
-            } else {
-                belowDisplay.text = "False";
-            }
-
+    void showBool(Text label, bool value) {
+        if (value) {
+            label.text = "True";
+        } else {
+            label.text = "False";
         }
     }
 }
