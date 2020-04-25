@@ -9,7 +9,11 @@ public class CameraController : MonoBehaviour {
     public float maxVelocity = 10f;
 
     private Frame frame;
+
     private Vector3 velocity;
+    private Vector3 lastVelocity;
+    private Vector3 acceleration;
+    private Vector3 lastAcceleration;
 
     // Start is called before the first frame update
     void Start() {
@@ -24,26 +28,32 @@ public class CameraController : MonoBehaviour {
 
     // LateUpdate is called once per frame, after Update
     void LateUpdate() {
-        setupFrame();
-
-        if (player) {
-            BoxCollider2D collider = player.GetComponent<BoxCollider2D>();
-            if (collider.bounds.max.x > frame.topRight.x) {
-                transform.Translate(new Vector3(collider.bounds.max.x - frame.topRight.x, 0, 0));
-            }
-            if (collider.bounds.min.x < frame.topLeft.x) {
-                transform.Translate(new Vector3(collider.bounds.min.x - frame.topLeft.x, 0, 0));
-            }
-            if (collider.bounds.max.y > frame.topLeft.y) {
-                transform.Translate(new Vector3(0, collider.bounds.max.y - frame.topLeft.y, 0));
-            }
-            if (collider.bounds.min.y < frame.bottomLeft.y) {
-                transform.Translate(new Vector3(0, collider.bounds.min.y - frame.bottomLeft.y, 0));
-            }
+        if (!player) {
+            return;
         }
+
+        setupFrame();
+        Vector3 targetPosition = transform.position;
+        BoxCollider2D collider = player.GetComponent<BoxCollider2D>();
+
+        if (collider.bounds.max.x > frame.topRight.x) {
+            targetPosition.x = collider.bounds.max.x - frame.topRight.x;
+        }
+        if (collider.bounds.min.x < frame.topLeft.x) {
+            targetPosition.x = collider.bounds.min.x - frame.topLeft.x;
+        }
+        if (collider.bounds.max.y > frame.topLeft.y) {
+            targetPosition.y = collider.bounds.max.y - frame.topLeft.y;
+        }
+        if (collider.bounds.min.y < frame.bottomLeft.y) {
+            targetPosition.y = collider.bounds.min.y - frame.bottomLeft.y;
+        }
+
+        
     }
 
     void OnDrawGizmosSelected() {
+        setupFrame();
         Gizmos.color = Color.white;
 
         Gizmos.DrawLine(frame.topLeft, frame.topRight);
