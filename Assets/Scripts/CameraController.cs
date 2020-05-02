@@ -2,25 +2,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour {
     public Transform player;
-    public Camera camera;
     public float maxAcceleration = 1f;
     public float maxVelocity = 10f;
 
     private Frame frame;
 
-    private Vector3 velocity;
-    private Vector3 lastVelocity;
-    private Vector3 acceleration;
-    private Vector3 lastAcceleration;
+    // the camera's ideal position, which we will continually move towards but
+    // not necessarily snap to (to avoid jerky camera motion)
+    private Vector3 targetPosition;
+
+    private Vector3 velocity = Vector3.zero;
+    public float smoothTime = 0.0025f;
+    // private Vector3 acceleration = Vector3.zero;
+
+    // the values of position, velocity, and acceleration last frame
+    // private Vector3 lastPosition = Vector3.zero;
+    // private Vector3 lastVelocity = Vector3.zero;
+    // private Vector3 lastAcceleration = Vector3.zero;
+
+    private Camera cam;
 
     // Start is called before the first frame update
     void Start() {
-        camera = gameObject.GetComponent<Camera>();
-        velocity.x = 0;
-        velocity.y = 0;
-        velocity.z = 0;
+        cam = gameObject.GetComponent<Camera>();
     }
 
     void Update() {
@@ -33,23 +40,26 @@ public class CameraController : MonoBehaviour {
         }
 
         setupFrame();
-        Vector3 targetPosition = transform.position;
+        targetPosition = transform.position;
         BoxCollider2D collider = player.GetComponent<BoxCollider2D>();
 
         if (collider.bounds.max.x > frame.topRight.x) {
-            targetPosition.x = collider.bounds.max.x - frame.topRight.x;
-        }
-        if (collider.bounds.min.x < frame.topLeft.x) {
-            targetPosition.x = collider.bounds.min.x - frame.topLeft.x;
-        }
-        if (collider.bounds.max.y > frame.topLeft.y) {
-            targetPosition.y = collider.bounds.max.y - frame.topLeft.y;
-        }
-        if (collider.bounds.min.y < frame.bottomLeft.y) {
-            targetPosition.y = collider.bounds.min.y - frame.bottomLeft.y;
+            targetPosition.x += collider.bounds.max.x - frame.topRight.x;
+        } else if (collider.bounds.min.x < frame.topLeft.x) {
+            targetPosition.x += collider.bounds.min.x - frame.topLeft.x;
         }
 
-        
+        if (collider.bounds.max.y > frame.topLeft.y) {
+            targetPosition.y += collider.bounds.max.y - frame.topLeft.y;
+        } else if (collider.bounds.min.y < frame.bottomLeft.y) {
+            targetPosition.y += collider.bounds.min.y - frame.bottomLeft.y;
+        }
+
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothTime);
+
+        // lastPosition = transform.position;
+        // lastVelocity = velocity;
+        // lastAcceleration = acceleration;
     }
 
     void OnDrawGizmosSelected() {
@@ -83,10 +93,10 @@ public class CameraController : MonoBehaviour {
         int height = Screen.height;
         int width = Screen.width;
 
-        frame.topLeft = camera.ScreenToWorldPoint(new Vector3(width / 2 - width / 6, height / 2 + height / 3, 1));
-        frame.topRight = camera.ScreenToWorldPoint(new Vector3(width / 2 + width / 6, height / 2 + height / 3, 1));
-        frame.bottomLeft = camera.ScreenToWorldPoint(new Vector3(width / 2 - width / 6, height / 2 - height / 3, 1));
-        frame.bottomRight = camera.ScreenToWorldPoint(new Vector3(width / 2 + width / 6, height / 2 - height / 3, 1));
+        frame.topLeft = cam.ScreenToWorldPoint(new Vector3(width / 2 - width / 9, height / 2 + height / 3, 1));
+        frame.topRight = cam.ScreenToWorldPoint(new Vector3(width / 2 + width / 9, height / 2 + height / 3, 1));
+        frame.bottomLeft = cam.ScreenToWorldPoint(new Vector3(width / 2 - width / 9, height / 2 - height / 3, 1));
+        frame.bottomRight = cam.ScreenToWorldPoint(new Vector3(width / 2 + width / 9, height / 2 - height / 3, 1));
     }
 
     struct Frame {

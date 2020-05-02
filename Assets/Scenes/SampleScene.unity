@@ -545,7 +545,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 1313500787}
-  camera: {fileID: 0}
+  maxAcceleration: 1
+  maxVelocity: 10
+  smoothTime: 0.3
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
