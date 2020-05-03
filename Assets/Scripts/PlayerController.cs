@@ -6,19 +6,21 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public class PlayerController : MonoBehaviour {
     public float jumpHeight = 4f;
-    public float jumpHorizontalScaling = 1.50f;
+    public float maxForwardJumpBoost = 2.50f;
     public float timeToJumpApex = 0.4f;
     public float moveSpeed = 6f;
     public float maxFallSpeed = -20f;
     public float timeToMaxRunSpeed = 0.15f;
     public float timeToMaxAirmoveSpeed = 0.025f;
-    public float floatTime = 0.05f; // amount of time spent at max jump height before falling again
+    public float maxApexTime = 0.05f; // amount of time spent at max jump height before falling again
     public float coyoteTime = 0.1f;
+    public GameObject tracerPrefab;
 
     // this has to be public to be readable by the display, which is a code
     // smell.
     public JumpState jumpState;
     private float jumpStateStart;
+    private float apexTime;
 
     private float jumpVelocity = 8f;
     private float gravity = -20f;
@@ -34,6 +36,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        Instantiate(tracerPrefab, transform.position, Quaternion.identity);
+
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         float targetX = input.x * moveSpeed;
         if (Mathf.Abs(input.x) < 0.1) {
@@ -52,15 +56,15 @@ public class PlayerController : MonoBehaviour {
         switch (jumpState) {
         case JumpState.Grounded:
             if (Input.GetButtonDown("Jump")) {
-                setJumpState(JumpState.Ascending);
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
-                    velocity.x = moveSpeed*jumpHorizontalScaling;
+                    velocity.x = moveSpeed*maxForwardJumpBoost;
                 } else if (input.x <= -0.25f) {
-                    velocity.x = -moveSpeed*jumpHorizontalScaling;
+                    velocity.x = -moveSpeed*maxForwardJumpBoost;
                 } else {
                     velocity.x = 0f;
                 }
+                setJumpState(JumpState.Ascending);
             } else {
                 velocity.y = gravity * Time.deltaTime;
                 velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
@@ -68,52 +72,43 @@ public class PlayerController : MonoBehaviour {
             break;
         
         case JumpState.Ascending:
-            // when ascending, you can alter your forward momentum, but you can't turn around.
+            float n = Mathf.InverseLerp(0, timeToJumpApex, Time.time - jumpStateStart);
+            float dragCoefficient = n * n;
+
+            if (Input.GetButton("Jump")) {
+                float jumpDrag = jumpVelocity * dragCoefficient;
+                if (n <= 0.4) {
+                    jumpDrag = 0;
+                }
+                velocity.y = jumpVelocity - jumpDrag;
+            } else {
+                // if we're not pressing jump any more we add all the gravity
+                velocity.y += gravity * Time.deltaTime;
+            }
+
+            float forwardBoost = maxForwardJumpBoost - (maxForwardJumpBoost * dragCoefficient);
+            forwardBoost = Mathf.Clamp(forwardBoost, 1, maxForwardJumpBoost);
 
             if (velocity.x >= 0) {
                 if (targetX >= 0) {
                     // continuing to move in your current direction is a boost
-                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX*jumpHorizontalScaling, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX * forwardBoost, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
                 } else {
                     // moving in the opposite direction can slow you down but
                     // not turn you around
-                    velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, 0, velocity.x), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    velocity.x = Mathf.Clamp(velocity.x, 0, initialVelocity.x);
                 }
             } else {
                 if (targetX <= 0) {
                     // continuing to move in your current direction is a boost
-                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX*jumpHorizontalScaling, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX * forwardBoost, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
                 } else {
                     // moving in the opposite direction can slow you down but
                     // not turn you around
-                    velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, velocity.x, 0), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    velocity.x = Mathf.Clamp(velocity.x, initialVelocity.x, 0);
                 }
-            }
-
-            float n = (Time.time - jumpStateStart) / timeToJumpApex;
-            n = Mathf.Clamp(n, 0, 1);
-
-            if (Input.GetButtonDown("Jump") && n >= 0.75f) {
-                velocity.y = jumpVelocity;
-                if (input.x >= 0.25f) {
-                    velocity.x = moveSpeed*jumpHorizontalScaling;
-                } else if (input.x <= -0.25f) {
-                    velocity.x = -moveSpeed*jumpHorizontalScaling;
-                } else {
-                    velocity.x = 0f;
-                }
-                setJumpState(JumpState.Ascending);
-                break;
-            }
-
-            if (Input.GetButton("Jump")) {
-                if (n < 0.4f) {
-                    velocity.y = jumpVelocity;
-                } else {
-                    velocity.y += gravity * Time.deltaTime * n * n;
-                }
-            } else {
-                velocity.y += gravity * Time.deltaTime;
             }
 
             // if we were rising in the last frame but will be falling in this
@@ -121,6 +116,7 @@ public class PlayerController : MonoBehaviour {
             if (initialVelocity.y >= 0 && velocity.y <= 0) {
                 velocity.y = 0;
                 setJumpState(JumpState.Apex);
+                apexTime = Mathf.Clamp(Time.time - jumpStateStart, 0, maxApexTime);
             }
 
             break;
@@ -129,9 +125,9 @@ public class PlayerController : MonoBehaviour {
             if (Input.GetButtonDown("Jump")) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
-                    velocity.x = moveSpeed*jumpHorizontalScaling;
+                    velocity.x = moveSpeed*maxForwardJumpBoost;
                 } else if (input.x <= -0.25f) {
-                    velocity.x = -moveSpeed*jumpHorizontalScaling;
+                    velocity.x = -moveSpeed*maxForwardJumpBoost;
                 } else {
                     velocity.x = 0f;
                 }
@@ -139,10 +135,10 @@ public class PlayerController : MonoBehaviour {
             } else {
                 // your horizontal motion at apex is constant throughout
                 // velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-                float timeFloating = Time.time - jumpStateStart;
-                float floatTimeRemaining = floatTime - timeFloating;
-                if (floatTimeRemaining < 0) {
-                    velocity.y += gravity * -floatTimeRemaining;
+                float timeAtApex = Time.time - jumpStateStart;
+                float apexTimeRemaining = maxApexTime - timeAtApex;
+                if (apexTimeRemaining < 0) {
+                    velocity.y += gravity * -apexTimeRemaining;
                     setJumpState(JumpState.Descending);
                 } else {
                     velocity.y = 0;
@@ -157,13 +153,13 @@ public class PlayerController : MonoBehaviour {
             // horizontal travel is decreasing when descending, so that you
             // always land vertically. Drag increases as you descend, so that it
             // is 1 at the end of your descent.
-            float drag = n2*n2*moveSpeed;
-            if (velocity.x >= 0) {
-                velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX-drag, 0, 1f), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-            } else {
-                velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX+drag, -1, 0), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-            }
-            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            // float drag = n2*n2*Mathf.Abs(velocity.x);
+            // drag = 0;
+            // if (velocity.x >= 0) {
+            //     velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, 0, velocity.x-drag), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            // } else {
+            //     velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, velocity.x+drag, 0), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            // }
 
             // fall speed is increasing when descending
             velocity.y += gravity * Time.deltaTime * n2 * n2;
@@ -184,17 +180,13 @@ public class PlayerController : MonoBehaviour {
             }
             break;
         
-        default:
+        case JumpState.Falling:
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
             velocity.y += gravity * Time.deltaTime;
-
-            // if we were rising in the last frame but will be falling in this
-            // frame, we should zero out the velocity to float instead.
-            if (initialVelocity.y >= 0 && velocity.y <= 0) {
-                velocity.y = 0;
-                setJumpState(JumpState.Apex);
-            }
             break;
+
+        default:
+            throw new System.Exception("bad jump state: " + jumpState);
         }
 
         if (velocity.y < maxFallSpeed) {

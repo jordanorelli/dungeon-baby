@@ -48,9 +48,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   jumpHeight: 4
+  maxForwardJumpBoost: 2.5
   timeToJumpApex: 0.4
   moveSpeed: 6
   maxFallSpeed: -20
+  timeToMaxRunSpeed: 0.15
+  timeToMaxAirmoveSpeed: 0.025
+  maxApexTime: 0.05
+  coyoteTime: 0.1
+  tracerPrefab: {fileID: 2438817463505096557, guid: 76ce4ec4aba832343abb5a3c19e66b7c,
+    type: 3}
+  jumpState: 0
 --- !u!114 &4623847142764859892
 MonoBehaviour:
   m_ObjectHideFlags: 0
