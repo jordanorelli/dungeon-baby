@@ -6859,12 +6859,17 @@ PrefabInstance:
     - target: {fileID: 4623847142764859891, guid: b29a944aaba25f643afdc6b049845662,
         type: 3}
       propertyPath: maxApexTime
-      value: 0.1
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 4623847142764859891, guid: b29a944aaba25f643afdc6b049845662,
         type: 3}
       propertyPath: maxForwardJumpBoost
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623847142764859891, guid: b29a944aaba25f643afdc6b049845662,
+        type: 3}
+      propertyPath: timeToMaxAirmoveSpeed
+      value: 0.25
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b29a944aaba25f643afdc6b049845662, type: 3}

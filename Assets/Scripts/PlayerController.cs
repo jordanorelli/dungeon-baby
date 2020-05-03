@@ -19,8 +19,12 @@ public class PlayerController : MonoBehaviour {
     // this has to be public to be readable by the display, which is a code
     // smell.
     public JumpState jumpState;
+    public JumpDirection jumpDirection;
     private float jumpStateStart;
-    private float apexTime;
+    private float jumpStartTime;
+    private float jumpHeldDuration;
+    private bool wasHoldingJump;
+    public float apexTime;
 
     private float jumpVelocity = 8f;
     private float gravity = -20f;
@@ -36,7 +40,9 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
-        Instantiate(tracerPrefab, transform.position, Quaternion.identity);
+        GameObject tracerObj = Instantiate(tracerPrefab, transform.position, Quaternion.identity);
+        TracerDot tracer = tracerObj.GetComponent<TracerDot>();
+        Debug.Log(tracer);
 
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         float targetX = input.x * moveSpeed;
@@ -55,7 +61,9 @@ public class PlayerController : MonoBehaviour {
 
         switch (jumpState) {
         case JumpState.Grounded:
-            if (Input.GetButtonDown("Jump")) {
+            tracer.color = Color.white;
+
+            if (Input.GetButton("Jump")) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -72,56 +80,63 @@ public class PlayerController : MonoBehaviour {
             break;
         
         case JumpState.Ascending:
+            tracer.color = Color.green;
+
+            // n starts at 0 and goes to 1 as we ascend
             float n = Mathf.InverseLerp(0, timeToJumpApex, Time.time - jumpStateStart);
+
+            // the drag coefficient gets bigger as we ascend, terminating at 1
             float dragCoefficient = n * n;
 
             if (Input.GetButton("Jump")) {
                 float jumpDrag = jumpVelocity * dragCoefficient;
-                if (n <= 0.4) {
+                if (n <= 0.7) {
                     jumpDrag = 0;
                 }
                 velocity.y = jumpVelocity - jumpDrag;
             } else {
                 // if we're not pressing jump any more we add all the gravity
-                velocity.y += gravity * Time.deltaTime;
+                velocity.y += 4 * gravity * Time.deltaTime;
+
+                // the amount of time spent floating is equal to the amount of
+                // time the player held down the jump button.
+                if (wasHoldingJump) {
+                    apexTime = Time.time - jumpStartTime;
+                }
             }
 
             float forwardBoost = maxForwardJumpBoost - (maxForwardJumpBoost * dragCoefficient);
             forwardBoost = Mathf.Clamp(forwardBoost, 1, maxForwardJumpBoost);
 
-            if (velocity.x >= 0) {
-                if (targetX >= 0) {
-                    // continuing to move in your current direction is a boost
-                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX * forwardBoost, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-                } else {
-                    // moving in the opposite direction can slow you down but
-                    // not turn you around
-                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-                    velocity.x = Mathf.Clamp(velocity.x, 0, initialVelocity.x);
-                }
-            } else {
-                if (targetX <= 0) {
-                    // continuing to move in your current direction is a boost
-                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX * forwardBoost, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-                } else {
-                    // moving in the opposite direction can slow you down but
-                    // not turn you around
-                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-                    velocity.x = Mathf.Clamp(velocity.x, initialVelocity.x, 0);
-                }
+            switch (jumpDirection) {
+            case JumpDirection.Neutral:
+                // you can wiggle out of a neutral jump in either direction
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+
+            case JumpDirection.Left:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX < 0 ? targetX * forwardBoost : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+
+            case JumpDirection.Right:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX > 0 ? targetX * forwardBoost : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
             }
 
             // if we were rising in the last frame but will be falling in this
             // frame, we should zero out the velocity to float instead.
             if (initialVelocity.y >= 0 && velocity.y <= 0) {
                 velocity.y = 0;
+                if (wasHoldingJump && Input.GetButton("Jump")) {
+                    apexTime = maxApexTime;
+                }
                 setJumpState(JumpState.Apex);
-                apexTime = Mathf.Clamp(Time.time - jumpStateStart, 0, maxApexTime);
             }
-
             break;
 
         case JumpState.Apex:
+            tracer.color = Color.magenta;
+
             if (Input.GetButtonDown("Jump")) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
@@ -133,10 +148,20 @@ public class PlayerController : MonoBehaviour {
                 }
                 setJumpState(JumpState.Ascending);
             } else {
-                // your horizontal motion at apex is constant throughout
-                // velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                switch (jumpDirection) {
+                case JumpDirection.Neutral:
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    break;
+                case JumpDirection.Left:
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX < 0 ? targetX : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    break;
+                case JumpDirection.Right:
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX > 0 ? targetX : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                    break;
+                }
+
                 float timeAtApex = Time.time - jumpStateStart;
-                float apexTimeRemaining = maxApexTime - timeAtApex;
+                float apexTimeRemaining = apexTime - timeAtApex;
                 if (apexTimeRemaining < 0) {
                     velocity.y += gravity * -apexTimeRemaining;
                     setJumpState(JumpState.Descending);
@@ -147,25 +172,28 @@ public class PlayerController : MonoBehaviour {
             break;
 
         case JumpState.Descending:
+            tracer.color = Color.yellow;
+
             float n2 = (Time.time - jumpStateStart) / timeToJumpApex;
             n2 = Mathf.Clamp(n2, 0, 1);
-
-            // horizontal travel is decreasing when descending, so that you
-            // always land vertically. Drag increases as you descend, so that it
-            // is 1 at the end of your descent.
-            // float drag = n2*n2*Mathf.Abs(velocity.x);
-            // drag = 0;
-            // if (velocity.x >= 0) {
-            //     velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, 0, velocity.x-drag), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-            // } else {
-            //     velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, velocity.x+drag, 0), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-            // }
+            switch (jumpDirection) {
+            case JumpDirection.Neutral:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+            case JumpDirection.Left:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX < 0 ? targetX : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+            case JumpDirection.Right:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX > 0 ? targetX : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+            }
 
             // fall speed is increasing when descending
-            velocity.y += gravity * Time.deltaTime * n2 * n2;
+            velocity.y += gravity * Time.deltaTime * (Mathf.Clamp(4 * n2 * n2, 1, 4));
             break;
 
         case JumpState.CoyoteTime:
+            tracer.color = Color.blue;
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
             if (Input.GetButtonDown("Jump")) {
                 setJumpState(JumpState.Ascending);
@@ -181,7 +209,19 @@ public class PlayerController : MonoBehaviour {
             break;
         
         case JumpState.Falling:
-            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            tracer.color = Color.red;
+
+            switch (jumpDirection) {
+            case JumpDirection.Neutral:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+            case JumpDirection.Left:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX < 0 ? targetX : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+            case JumpDirection.Right:
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX > 0 ? targetX : 0, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                break;
+            }
             velocity.y += gravity * Time.deltaTime;
             break;
 
@@ -200,6 +240,7 @@ public class PlayerController : MonoBehaviour {
         if (jumpState != JumpState.Grounded && moveController.isGrounded) {
             setJumpState(JumpState.Grounded);
         }
+        wasHoldingJump = Input.GetButton("Jump");
     }
 
     void OnDestroy() {
@@ -212,8 +253,18 @@ public class PlayerController : MonoBehaviour {
     }
 
     void setJumpState(JumpState state) {
+        if (jumpState != JumpState.Ascending && state == JumpState.Ascending) {
+            jumpStartTime = Time.time;
+        }
         jumpState = state;
         jumpStateStart = Time.time;
+        if (velocity.x == 0) {
+            jumpDirection = JumpDirection.Neutral;
+        } else if (velocity.x > 0) {
+            jumpDirection = JumpDirection.Right;
+        } else {
+            jumpDirection = JumpDirection.Left;
+        }
     }
 
     /*
@@ -250,5 +301,11 @@ public class PlayerController : MonoBehaviour {
         // The player is descending but without control; they are falling but
         // did not initially jump.
         Falling,
+    }
+
+    public enum JumpDirection {
+        Neutral,
+        Left,
+        Right,
     }
 }

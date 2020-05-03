@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class TracerDot : MonoBehaviour {
     private float spawned;
+    public Color color;
 
     void Start() {
         spawned = Time.time;
+        // color = Color.white;
     }
 
     void OnDrawGizmos() {
-        Gizmos.color = Color.red;
+        Gizmos.color = color;
         Gizmos.DrawWireSphere(transform.position, 0.125f);
     }
 
