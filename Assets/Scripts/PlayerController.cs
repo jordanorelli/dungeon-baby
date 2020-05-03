@@ -6,13 +6,14 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public class PlayerController : MonoBehaviour {
     public float jumpHeight = 4f;
+    public float jumpHorizontalScaling = 1.50f;
     public float timeToJumpApex = 0.4f;
     public float moveSpeed = 6f;
     public float maxFallSpeed = -20f;
     public float timeToMaxRunSpeed = 0.15f;
-    public float timeToMaxAirmoveSpeed = 0.25f;
-    public float floatTime = 0.025f; // amount of time spent at max jump height before falling again
-    public float coyoteTime = 0.025f;
+    public float timeToMaxAirmoveSpeed = 0.025f;
+    public float floatTime = 0.05f; // amount of time spent at max jump height before falling again
+    public float coyoteTime = 0.1f;
 
     // this has to be public to be readable by the display, which is a code
     // smell.
@@ -35,6 +36,9 @@ public class PlayerController : MonoBehaviour {
     void Update() {
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         float targetX = input.x * moveSpeed;
+        if (Mathf.Abs(input.x) < 0.1) {
+            targetX = 0;
+        }
         Vector3 initialVelocity = velocity;
 
         if (moveController.collisions.above) {
@@ -50,37 +54,119 @@ public class PlayerController : MonoBehaviour {
             if (Input.GetButtonDown("Jump")) {
                 setJumpState(JumpState.Ascending);
                 velocity.y = jumpVelocity;
+                if (input.x >= 0.25f) {
+                    velocity.x = moveSpeed*jumpHorizontalScaling;
+                } else if (input.x <= -0.25f) {
+                    velocity.x = -moveSpeed*jumpHorizontalScaling;
+                } else {
+                    velocity.x = 0f;
+                }
             } else {
                 velocity.y = gravity * Time.deltaTime;
+                velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
             }
-            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
             break;
         
-        // case JumpState.Ascending:
-        //     velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-        //     velocity.y += gravity * Time.deltaTime;
-        //     if (velocity.y < maxFallSpeed) {
-        //         velocity.y = maxFallSpeed;
-        //     }
+        case JumpState.Ascending:
+            // when ascending, you can alter your forward momentum, but you can't turn around.
 
-        //     // if we were rising in the last frame but will be falling in this
-        //     // frame, we should zero out the velocity to float instead.
-        //     if (initialVelocity.y >= 0 && velocity.y <= 0) {
-        //         velocity.y = 0;
-        //         setJumpState(JumpState.Apex);
-        //     }
-        //     break;
+            if (velocity.x >= 0) {
+                if (targetX >= 0) {
+                    // continuing to move in your current direction is a boost
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX*jumpHorizontalScaling, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                } else {
+                    // moving in the opposite direction can slow you down but
+                    // not turn you around
+                    velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, 0, velocity.x), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                }
+            } else {
+                if (targetX <= 0) {
+                    // continuing to move in your current direction is a boost
+                    velocity.x = Mathf.SmoothDamp(velocity.x, targetX*jumpHorizontalScaling, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                } else {
+                    // moving in the opposite direction can slow you down but
+                    // not turn you around
+                    velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX, velocity.x, 0), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                }
+            }
+
+            float n = (Time.time - jumpStateStart) / timeToJumpApex;
+            n = Mathf.Clamp(n, 0, 1);
+
+            if (Input.GetButtonDown("Jump") && n >= 0.75f) {
+                velocity.y = jumpVelocity;
+                if (input.x >= 0.25f) {
+                    velocity.x = moveSpeed*jumpHorizontalScaling;
+                } else if (input.x <= -0.25f) {
+                    velocity.x = -moveSpeed*jumpHorizontalScaling;
+                } else {
+                    velocity.x = 0f;
+                }
+                setJumpState(JumpState.Ascending);
+                break;
+            }
+
+            if (Input.GetButton("Jump")) {
+                if (n < 0.4f) {
+                    velocity.y = jumpVelocity;
+                } else {
+                    velocity.y += gravity * Time.deltaTime * n * n;
+                }
+            } else {
+                velocity.y += gravity * Time.deltaTime;
+            }
+
+            // if we were rising in the last frame but will be falling in this
+            // frame, we should zero out the velocity to float instead.
+            if (initialVelocity.y >= 0 && velocity.y <= 0) {
+                velocity.y = 0;
+                setJumpState(JumpState.Apex);
+            }
+
+            break;
 
         case JumpState.Apex:
-            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
-            float timeFloating = Time.time - jumpStateStart;
-            float floatTimeRemaining = floatTime - timeFloating;
-            if (floatTimeRemaining < 0) {
-                velocity.y += gravity * -floatTimeRemaining;
-                setJumpState(JumpState.Descending);
+            if (Input.GetButtonDown("Jump")) {
+                velocity.y = jumpVelocity;
+                if (input.x >= 0.25f) {
+                    velocity.x = moveSpeed*jumpHorizontalScaling;
+                } else if (input.x <= -0.25f) {
+                    velocity.x = -moveSpeed*jumpHorizontalScaling;
+                } else {
+                    velocity.x = 0f;
+                }
+                setJumpState(JumpState.Ascending);
             } else {
-                velocity.y = 0;
+                // your horizontal motion at apex is constant throughout
+                // velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+                float timeFloating = Time.time - jumpStateStart;
+                float floatTimeRemaining = floatTime - timeFloating;
+                if (floatTimeRemaining < 0) {
+                    velocity.y += gravity * -floatTimeRemaining;
+                    setJumpState(JumpState.Descending);
+                } else {
+                    velocity.y = 0;
+                }
             }
+            break;
+
+        case JumpState.Descending:
+            float n2 = (Time.time - jumpStateStart) / timeToJumpApex;
+            n2 = Mathf.Clamp(n2, 0, 1);
+
+            // horizontal travel is decreasing when descending, so that you
+            // always land vertically. Drag increases as you descend, so that it
+            // is 1 at the end of your descent.
+            float drag = n2*n2*moveSpeed;
+            if (velocity.x >= 0) {
+                velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX-drag, 0, 1f), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            } else {
+                velocity.x = Mathf.SmoothDamp(velocity.x, Mathf.Clamp(targetX+drag, -1, 0), ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+            }
+            velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
+
+            // fall speed is increasing when descending
+            velocity.y += gravity * Time.deltaTime * n2 * n2;
             break;
 
         case JumpState.CoyoteTime:
@@ -92,20 +178,15 @@ public class PlayerController : MonoBehaviour {
                 float elapsedCoyoteTime = Time.time - jumpStateStart;
                 float coyoteTimeRemaining =  coyoteTime - elapsedCoyoteTime;
                 if (coyoteTimeRemaining < 0) {
-                    velocity.y += gravity * -coyoteTimeRemaining;
                     setJumpState(JumpState.Falling);
-                } else {
-                    velocity.y = 0;
                 }
+                velocity.y += gravity * Time.deltaTime;
             }
             break;
         
         default:
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxAirmoveSpeed);
             velocity.y += gravity * Time.deltaTime;
-            if (velocity.y < maxFallSpeed) {
-                velocity.y = maxFallSpeed;
-            }
 
             // if we were rising in the last frame but will be falling in this
             // frame, we should zero out the velocity to float instead.
@@ -114,6 +195,10 @@ public class PlayerController : MonoBehaviour {
                 setJumpState(JumpState.Apex);
             }
             break;
+        }
+
+        if (velocity.y < maxFallSpeed) {
+            velocity.y = maxFallSpeed;
         }
 
         moveController.Move(velocity * Time.deltaTime);
