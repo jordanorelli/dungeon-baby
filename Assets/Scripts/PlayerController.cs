@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour {
     public float timeToMaxAirmoveSpeed = 0.025f;
     public float maxApexTime = 0.05f; // amount of time spent at max jump height before falling again
     public float coyoteTime = 0.1f;
+    public int maxJumps = 2;
     public GameObject tracerPrefab;
 
     // this has to be public to be readable by the display, which is a code
@@ -23,6 +24,7 @@ public class PlayerController : MonoBehaviour {
     private float jumpStateStart;
     private float jumpStartTime;
     private float jumpHeldDuration;
+    public int jumpCount;
     private bool wasHoldingJump;
     public float apexTime;
 
@@ -73,6 +75,7 @@ public class PlayerController : MonoBehaviour {
                     velocity.x = 0f;
                 }
                 setJumpState(JumpState.Ascending);
+                break;
             } else {
                 velocity.y = gravity * Time.deltaTime;
                 velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
@@ -88,7 +91,18 @@ public class PlayerController : MonoBehaviour {
             // the drag coefficient gets bigger as we ascend, terminating at 1
             float dragCoefficient = n * n;
 
-            if (Input.GetButton("Jump")) {
+            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+                velocity.y = jumpVelocity;
+                if (input.x >= 0.25f) {
+                    velocity.x = moveSpeed*maxForwardJumpBoost;
+                } else if (input.x <= -0.25f) {
+                    velocity.x = -moveSpeed*maxForwardJumpBoost;
+                } else {
+                    velocity.x = 0f;
+                }
+                setJumpState(JumpState.Ascending);
+                break;
+            } else if (Input.GetButton("Jump")) {
                 float jumpDrag = jumpVelocity * dragCoefficient;
                 if (n <= 0.7) {
                     jumpDrag = 0;
@@ -137,7 +151,7 @@ public class PlayerController : MonoBehaviour {
         case JumpState.Apex:
             tracer.color = Color.magenta;
 
-            if (Input.GetButtonDown("Jump")) {
+            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -147,6 +161,7 @@ public class PlayerController : MonoBehaviour {
                     velocity.x = 0f;
                 }
                 setJumpState(JumpState.Ascending);
+                break;
             } else {
                 switch (jumpDirection) {
                 case JumpDirection.Neutral:
@@ -173,6 +188,19 @@ public class PlayerController : MonoBehaviour {
 
         case JumpState.Descending:
             tracer.color = Color.yellow;
+
+            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+                velocity.y = jumpVelocity;
+                if (input.x >= 0.25f) {
+                    velocity.x = moveSpeed*maxForwardJumpBoost;
+                } else if (input.x <= -0.25f) {
+                    velocity.x = -moveSpeed*maxForwardJumpBoost;
+                } else {
+                    velocity.x = 0f;
+                }
+                setJumpState(JumpState.Ascending);
+                break;
+            }
 
             float n2 = (Time.time - jumpStateStart) / timeToJumpApex;
             n2 = Mathf.Clamp(n2, 0, 1);
@@ -210,6 +238,19 @@ public class PlayerController : MonoBehaviour {
         
         case JumpState.Falling:
             tracer.color = Color.red;
+
+            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+                velocity.y = jumpVelocity;
+                if (input.x >= 0.25f) {
+                    velocity.x = moveSpeed*maxForwardJumpBoost;
+                } else if (input.x <= -0.25f) {
+                    velocity.x = -moveSpeed*maxForwardJumpBoost;
+                } else {
+                    velocity.x = 0f;
+                }
+                setJumpState(JumpState.Ascending);
+                break;
+            }
 
             switch (jumpDirection) {
             case JumpDirection.Neutral:
@@ -264,6 +305,13 @@ public class PlayerController : MonoBehaviour {
             jumpDirection = JumpDirection.Right;
         } else {
             jumpDirection = JumpDirection.Left;
+        }
+
+        if (state == JumpState.Grounded) {
+            jumpCount = 0;
+        }
+        if (state == JumpState.Ascending) {
+            jumpCount++;
         }
     }
 
