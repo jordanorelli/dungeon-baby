@@ -44,7 +44,6 @@ public class PlayerController : MonoBehaviour {
     void Update() {
         GameObject tracerObj = Instantiate(tracerPrefab, transform.position, Quaternion.identity);
         TracerDot tracer = tracerObj.GetComponent<TracerDot>();
-        Debug.Log(tracer);
 
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         float targetX = input.x * moveSpeed;
