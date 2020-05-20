@@ -309,6 +309,34 @@ public class PlayerController : MonoBehaviour {
             setJumpState(JumpState.Grounded);
         }
         wasHoldingJump = Input.GetButton("Jump");
+
+        CheckCollisions();
+    }
+
+    void CheckCollisions() {
+        CollideWith(moveController.collisions.above);
+        CollideWith(moveController.collisions.below);
+        CollideWith(moveController.collisions.left);
+        CollideWith(moveController.collisions.right);
+    }
+
+    void CollideWith(Collider2D other) {
+        if (other == null) {
+            return;
+        }
+        Crumble crumble = other.GetComponent<Crumble>();
+        if (crumble) {
+            crumble.Hit();
+        }
+
+        TouchHazard hazard = other.GetComponent<TouchHazard>();
+        if (hazard) {
+            if (jumpState == JumpState.Dash) {
+                Destroy(hazard.gameObject);
+            } else {
+                Destroy(gameObject);
+            }
+        }
     }
 
     void OnDestroy() {

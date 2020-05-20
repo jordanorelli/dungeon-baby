@@ -53,13 +53,9 @@ public class MoveController : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
             if (hit) {
                 if (directionY > 0) {
-                    collisions.above = true;
+                    collisions.above = hit.collider;
                 } else {
-                    collisions.below = true;
-                    Crumble crumble = hit.collider.gameObject.GetComponent<Crumble>();
-                    if (crumble) {
-                        crumble.Hit();
-                    }
+                    collisions.below = hit.collider;
                 }
                 velocity.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;
@@ -79,9 +75,9 @@ public class MoveController : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
             if (hit) {
                 if (directionX > 0) {
-                    collisions.right = true;
+                    collisions.right = hit.collider;
                 } else {
-                    collisions.left = true;
+                    collisions.left = hit.collider;
                 }
                 velocity.x = (hit.distance - skinWidth) * directionX;
                 rayLength = hit.distance;
@@ -122,16 +118,16 @@ public class MoveController : MonoBehaviour
     }
 
     public struct CollisionInfo {
-        public bool above;
-        public bool below;
-        public bool left;
-        public bool right;
+        public Collider2D above;
+        public Collider2D below;
+        public Collider2D left;
+        public Collider2D right;
 
         public void Reset() {
-            above = false;
-            below = false;
-            left = false;
-            right = false;
+            above = null;
+            below = null;
+            left = null;
+            right = null;
         }
     }
 }
