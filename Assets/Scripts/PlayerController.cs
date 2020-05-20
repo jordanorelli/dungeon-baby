@@ -8,6 +8,10 @@ public class PlayerController : MonoBehaviour {
     public float jumpHeight = 4f;
     public float maxForwardJumpBoost = 2.50f;
     public float timeToJumpApex = 0.4f;
+    public float lastDashTime = 0f;
+    public float dashTime = 0.125f;
+    public float dashSpeed = 50f;
+    public float dashCooldown = 1.25f;
     public float moveSpeed = 6f;
     public float maxFallSpeed = -20f;
     public float timeToMaxRunSpeed = 0.15f;
@@ -16,6 +20,7 @@ public class PlayerController : MonoBehaviour {
     public float coyoteTime = 0.1f;
     public int maxJumps = 2;
     public GameObject tracerPrefab;
+    public GameObject dashIndicator;
 
     // this has to be public to be readable by the display, which is a code
     // smell.
@@ -64,7 +69,9 @@ public class PlayerController : MonoBehaviour {
         case JumpState.Grounded:
             tracer.color = Color.white;
 
-            if (Input.GetButton("Jump")) {
+            if (dash()) {
+                break;
+            } else if (Input.GetButton("Jump")) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -81,6 +88,20 @@ public class PlayerController : MonoBehaviour {
             }
             break;
         
+        case JumpState.Dash:
+            tracer.color = Color.red;
+            velocity.x = Mathf.SmoothDamp(velocity.x, velocity.x >= 0 ? moveSpeed : -moveSpeed, ref velocityXSmoothing, dashTime);
+            velocity.y = 0;
+            float timeDashing = Time.time - lastDashTime;
+            if (timeDashing >= dashTime) {
+                if (moveController.isGrounded) {
+                    setJumpState(JumpState.Grounded);
+                } else {
+                    setJumpState(JumpState.Falling);
+                }
+            }
+            break;
+
         case JumpState.Ascending:
             tracer.color = Color.green;
 
@@ -90,7 +111,9 @@ public class PlayerController : MonoBehaviour {
             // the drag coefficient gets bigger as we ascend, terminating at 1
             float dragCoefficient = n * n;
 
-            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            if (dash()) {
+                break;
+            } else if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -150,7 +173,9 @@ public class PlayerController : MonoBehaviour {
         case JumpState.Apex:
             tracer.color = Color.magenta;
 
-            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            if (dash()) {
+                break;
+            } else if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -222,7 +247,10 @@ public class PlayerController : MonoBehaviour {
         case JumpState.CoyoteTime:
             tracer.color = Color.blue;
             velocity.x = Mathf.SmoothDamp(velocity.x, targetX, ref velocityXSmoothing, timeToMaxRunSpeed);
-            if (Input.GetButtonDown("Jump")) {
+
+            if (dash()) {
+                break;
+            } else if (Input.GetButtonDown("Jump")) {
                 setJumpState(JumpState.Ascending);
                 velocity.y = jumpVelocity;
             } else {
@@ -236,7 +264,7 @@ public class PlayerController : MonoBehaviour {
             break;
         
         case JumpState.Falling:
-            tracer.color = Color.red;
+            tracer.color = Color.grey;
 
             if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
@@ -292,7 +320,29 @@ public class PlayerController : MonoBehaviour {
     void OnTriggerEnter(Collider other) {
     }
 
+    bool dash() {
+        if (!Input.GetButtonDown("Fire1")) {
+            return false;
+        }
+
+        if ((Time.time - lastDashTime) < dashCooldown) {
+            return false;
+        }
+
+        if (velocity.x >= 0) {
+            velocity.x = dashSpeed;
+        } else {
+            velocity.x = -dashSpeed;
+        }
+        velocity.y = 0;
+        lastDashTime = Time.time;
+        setJumpState(JumpState.Dash);
+
+        return true;
+    }
+
     void setJumpState(JumpState state) {
+        dashIndicator.SetActive(state == JumpState.Dash);
         if (jumpState != JumpState.Ascending && state == JumpState.Ascending) {
             jumpStartTime = Time.time;
         }
@@ -319,6 +369,7 @@ public class PlayerController : MonoBehaviour {
     Possible JumpState transitions:
 
     Grounded   -> Ascending  : a normal jump
+    Grounded   -> Dash       : a normal dash
     Grounded   -> CoyoteTime : player has walked off ledge
     CoyoteTime -> Ascending  : player has jumped after leaving a ledge
     CoyoteTime -> Falling    : player has walked off of a ledge and is now falling
@@ -348,6 +399,8 @@ public class PlayerController : MonoBehaviour {
         // The player is descending but without control; they are falling but
         // did not initially jump.
         Falling,
+
+        Dash,
     }
 
     public enum JumpDirection {
