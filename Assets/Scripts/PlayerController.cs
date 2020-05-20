@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(MoveController))]
 [RequireComponent(typeof(BoxCollider2D))]
@@ -314,8 +315,14 @@ public class PlayerController : MonoBehaviour {
     }
 
     void CheckCollisions() {
+        if (moveController.collisions.below) {
+            Crumble crumble = moveController.collisions.below.GetComponent<Crumble>();
+            if (crumble) {
+                crumble.Hit();
+            }
+            CollideWith(moveController.collisions.below);
+        }
         CollideWith(moveController.collisions.above);
-        CollideWith(moveController.collisions.below);
         CollideWith(moveController.collisions.left);
         CollideWith(moveController.collisions.right);
     }
@@ -324,17 +331,14 @@ public class PlayerController : MonoBehaviour {
         if (other == null) {
             return;
         }
-        Crumble crumble = other.GetComponent<Crumble>();
-        if (crumble) {
-            crumble.Hit();
-        }
 
         TouchHazard hazard = other.GetComponent<TouchHazard>();
         if (hazard) {
             if (jumpState == JumpState.Dash) {
                 Destroy(hazard.gameObject);
             } else {
-                Destroy(gameObject);
+                SceneManager.LoadScene( SceneManager.GetActiveScene().buildIndex ) ;
+                // Destroy(gameObject);
             }
         }
     }
