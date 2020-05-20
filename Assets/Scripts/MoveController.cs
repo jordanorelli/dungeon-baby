@@ -56,6 +56,10 @@ public class MoveController : MonoBehaviour
                     collisions.above = true;
                 } else {
                     collisions.below = true;
+                    Crumble crumble = hit.collider.gameObject.GetComponent<Crumble>();
+                    if (crumble) {
+                        crumble.Hit();
+                    }
                 }
                 velocity.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;
