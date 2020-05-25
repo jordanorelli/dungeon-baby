@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 [RequireComponent(typeof(MoveController))]
 [RequireComponent(typeof(BoxCollider2D))]
@@ -23,6 +25,8 @@ public class PlayerController : MonoBehaviour {
     public GameObject tracerPrefab;
     public GameObject dashIndicator;
 
+    public PlayerControls controls;
+
     // this has to be public to be readable by the display, which is a code
     // smell.
     public JumpState jumpState;
@@ -41,17 +45,29 @@ public class PlayerController : MonoBehaviour {
     private float velocityXSmoothing;
 
     void Start() {
+        // Debug.Log("Creating new controls in Start!");
+        // controls = new PlayerControls();
         setJumpState(JumpState.Falling);
         moveController = GetComponent<MoveController>();
         gravity = -(2* jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
         jumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
     }
 
+    void Awake() {
+        Debug.Log("Creating new controls in Awake!");
+        controls = new PlayerControls();
+    }
+
     void Update() {
+        InputActionPhase jumpPhase = controls.Gameplay.Jump.phase;
+        bool jumpTriggered = controls.Gameplay.Jump.triggered;
+        // Debug.LogFormat("Jump Phase: {0} Triggered: {1}", jumpPhase, jumpTriggered);
+
         GameObject tracerObj = Instantiate(tracerPrefab, transform.position, Quaternion.identity);
         TracerDot tracer = tracerObj.GetComponent<TracerDot>();
 
-        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        Vector2 input = controls.Gameplay.Move.ReadValue<Vector2>();
+        // Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         float targetX = input.x * moveSpeed;
         if (Mathf.Abs(input.x) < 0.1) {
             targetX = 0;
@@ -72,7 +88,8 @@ public class PlayerController : MonoBehaviour {
 
             if (dash()) {
                 break;
-            } else if (Input.GetButton("Jump")) {
+            } else if (controls.Gameplay.Jump.phase == InputActionPhase.Started) {
+            // } else if (Input.GetButton("Jump")) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -114,7 +131,8 @@ public class PlayerController : MonoBehaviour {
 
             if (dash()) {
                 break;
-            } else if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            // } else if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            } else if (controls.Gameplay.Jump.triggered && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -125,7 +143,8 @@ public class PlayerController : MonoBehaviour {
                 }
                 setJumpState(JumpState.Ascending);
                 break;
-            } else if (Input.GetButton("Jump")) {
+            // } else if (Input.GetButton("Jump")) {
+            } else if (controls.Gameplay.Jump.phase == InputActionPhase.Started) {
                 float jumpDrag = jumpVelocity * dragCoefficient;
                 if (n <= 0.7) {
                     jumpDrag = 0;
@@ -164,7 +183,8 @@ public class PlayerController : MonoBehaviour {
             // frame, we should zero out the velocity to float instead.
             if (initialVelocity.y >= 0 && velocity.y <= 0) {
                 velocity.y = 0;
-                if (wasHoldingJump && Input.GetButton("Jump")) {
+                // if (wasHoldingJump && Input.GetButton("Jump")) {
+                if (wasHoldingJump && controls.Gameplay.Jump.phase == InputActionPhase.Started) {
                     apexTime = maxApexTime;
                 }
                 setJumpState(JumpState.Apex);
@@ -176,7 +196,8 @@ public class PlayerController : MonoBehaviour {
 
             if (dash()) {
                 break;
-            } else if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            // } else if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            } else if (controls.Gameplay.Jump.triggered && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -214,7 +235,8 @@ public class PlayerController : MonoBehaviour {
         case JumpState.Descending:
             tracer.color = Color.yellow;
 
-            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            // if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            if (controls.Gameplay.Jump.triggered && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -251,7 +273,8 @@ public class PlayerController : MonoBehaviour {
 
             if (dash()) {
                 break;
-            } else if (Input.GetButtonDown("Jump")) {
+            // } else if (Input.GetButtonDown("Jump")) {
+            } else if (controls.Gameplay.Jump.triggered) {
                 setJumpState(JumpState.Ascending);
                 velocity.y = jumpVelocity;
             } else {
@@ -267,7 +290,8 @@ public class PlayerController : MonoBehaviour {
         case JumpState.Falling:
             tracer.color = Color.grey;
 
-            if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            // if (Input.GetButtonDown("Jump") && jumpCount < maxJumps) {
+            if (controls.Gameplay.Jump.triggered && jumpCount < maxJumps) {
                 velocity.y = jumpVelocity;
                 if (input.x >= 0.25f) {
                     velocity.x = moveSpeed*maxForwardJumpBoost;
@@ -309,7 +333,8 @@ public class PlayerController : MonoBehaviour {
         if (jumpState != JumpState.Grounded && moveController.isGrounded) {
             setJumpState(JumpState.Grounded);
         }
-        wasHoldingJump = Input.GetButton("Jump");
+        // wasHoldingJump = Input.GetButton("Jump");
+        wasHoldingJump = controls.Gameplay.Jump.phase == InputActionPhase.Started;
 
         CheckCollisions();
     }
@@ -343,6 +368,20 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
+    public void OnEnable() {
+        Debug.Log("Enabling the controls!");
+        controls.Enable();
+        controls.Gameplay.Enable();
+        controls.Gameplay.Jump.Enable();
+    }
+
+    public void OnDisable() {
+        Debug.Log("Disabling the controls!");
+        controls.Disable();
+        controls.Gameplay.Disable();
+        controls.Gameplay.Jump.Disable();
+    }
+
     void OnDestroy() {
     }
 
@@ -353,7 +392,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     bool dash() {
-        if (!Input.GetButtonDown("Fire1")) {
+        // if (!Input.GetButtonDown("Fire1")) {
+        if (!controls.Gameplay.Dash.triggered) {
             return false;
         }
 

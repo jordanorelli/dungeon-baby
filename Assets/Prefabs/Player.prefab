@@ -159,6 +159,54 @@ MonoBehaviour:
   tracerPrefab: {fileID: 2438817463505096557, guid: 76ce4ec4aba832343abb5a3c19e66b7c,
     type: 3}
   dashIndicator: {fileID: 3504191955490326659}
+  moveAction:
+    m_Name: Move
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: ad4acdfe-fdb1-4bba-aaee-fd23b58c9e76
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: a136d531-716d-40df-bf2c-d970a579bfb2
+      m_Path: <Gamepad>/leftStick
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move
+      m_Flags: 0
+  jumpAction:
+    m_Name: Jump
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 90cb081e-cdb8-497b-bbf1-8731dc964572
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 49bfcfda-05b6-4d6d-acef-7105797c2c76
+      m_Path: <Gamepad>/buttonSouth
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Jump
+      m_Flags: 0
+  dashAction:
+    m_Name: Dash
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 3a2b1052-20a3-4b83-ad55-3b4df6265ed0
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 26ac24c7-89f8-431a-a81a-14dff12d2862
+      m_Path: <Gamepad>/buttonWest
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Dash
+      m_Flags: 0
   jumpState: 0
   jumpDirection: 0
   jumpCount: 0
