@@ -23,7 +23,8 @@ public class PlayerController : MonoBehaviour {
     public float coyoteTime = 0.1f;
     public int maxJumps = 2;
     public GameObject tracerPrefab;
-    public GameObject dashIndicator;
+    public GameObject leftDashIndicator;
+    public GameObject rightDashIndicator;
 
     public PlayerControls controls;
 
@@ -416,12 +417,30 @@ public class PlayerController : MonoBehaviour {
         velocity.y = 0;
         lastDashTime = Time.time;
         setJumpState(JumpState.Dash);
-
+        StartCoroutine(dashFade());
         return true;
     }
 
+    public IEnumerator dashFade() {
+        Material m = gameObject.GetComponent<MeshRenderer>().materials[0];
+        float dt = 0;
+        float h = 0;
+        float s = 0;
+        float v = 0;
+        Color.RGBToHSV(m.color, out h, out s, out v);
+        float maxSaturation = s;
+        while (dt < dashCooldown) {
+            s = Mathf.Clamp(dt / dashCooldown, 0f, maxSaturation);
+            m.color = Color.HSVToRGB(h, s, v);
+            dt += Time.deltaTime;
+            yield return true;
+        }
+    }
+
     void setJumpState(JumpState state) {
-        dashIndicator.SetActive(state == JumpState.Dash);
+        leftDashIndicator.SetActive(state == JumpState.Dash && velocity.x < 0);
+        rightDashIndicator.SetActive(state == JumpState.Dash && velocity.x >= 0);
+
         if (jumpState != JumpState.Ascending && state == JumpState.Ascending) {
             jumpStartTime = Time.time;
         }
