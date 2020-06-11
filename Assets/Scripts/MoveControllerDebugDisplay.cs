@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class MoveControllerDebugDisplay : MonoBehaviour {
@@ -30,6 +28,7 @@ public class MoveControllerDebugDisplay : MonoBehaviour {
             showBool(leftDisplay, moveController.collisions.left);
             showBool(rightDisplay, moveController.collisions.right);
         }
+
         if (player) {
             switch (player.jumpState) {
             case PlayerController.JumpState.Grounded:
@@ -54,7 +53,6 @@ public class MoveControllerDebugDisplay : MonoBehaviour {
                 jumpStateDisplay.text = "???";
                 break;
             }
-        
         }
     }
 

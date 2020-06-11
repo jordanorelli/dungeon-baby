@@ -366,6 +366,13 @@ public class PlayerController : MonoBehaviour {
                 // Destroy(gameObject);
             }
         }
+
+        Smashable smashable = other.GetComponent<Smashable>();
+        if (smashable) {
+            if (jumpState == JumpState.Dash) {
+                Destroy(smashable.gameObject);
+            }
+        }
     }
 
     public void OnEnable() {
