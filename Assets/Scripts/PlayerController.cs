@@ -56,12 +56,18 @@ public class PlayerController : MonoBehaviour {
 
     void Awake() {
         Debug.Log("Creating new controls in Awake!");
-        controls = new PlayerControls();
     }
 
     void Update() {
-        InputActionPhase jumpPhase = controls.Gameplay.Jump.phase;
-        bool jumpTriggered = controls.Gameplay.Jump.triggered;
+        InputActionPhase jumpPhase = InputActionPhase.Waiting;
+        bool jumpTriggered = false;
+        if (controls == null) {
+            Debug.Log("HOW IS GAMEPLAY NULL");
+        }
+        if (controls.Gameplay.Jump != null) {
+            jumpPhase = controls.Gameplay.Jump.phase;
+            jumpTriggered = controls.Gameplay.Jump.triggered;
+        }
         // Debug.LogFormat("Jump Phase: {0} Triggered: {1}", jumpPhase, jumpTriggered);
 
         GameObject tracerObj = Instantiate(tracerPrefab, transform.position, Quaternion.identity);
@@ -357,6 +363,7 @@ public class PlayerController : MonoBehaviour {
         if (other == null) {
             return;
         }
+        Debug.Log(other);
 
         TouchHazard hazard = other.GetComponent<TouchHazard>();
         if (hazard) {
@@ -374,10 +381,18 @@ public class PlayerController : MonoBehaviour {
                 Destroy(smashable.gameObject);
             }
         }
+
+        Seeker seeker = other.GetComponent<Seeker>();
+        if (seeker) {
+            SceneManager.LoadScene( SceneManager.GetActiveScene().buildIndex ) ;
+        }
     }
 
     public void OnEnable() {
         Debug.Log("Enabling the controls!");
+        if (controls == null) {
+            controls = new PlayerControls();
+        }
         controls.Enable();
         controls.Gameplay.Enable();
         controls.Gameplay.Jump.Enable();
