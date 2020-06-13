@@ -181,7 +181,7 @@ MonoBehaviour:
   verticalRayCount: 4
   collisionMask:
     serializedVersion: 2
-    m_Bits: 1024
+    m_Bits: 5120
 --- !u!33 &4623847142764859895
 MeshFilter:
   m_ObjectHideFlags: 0

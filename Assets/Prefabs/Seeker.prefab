@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7060401994191104731}
   - component: {fileID: 5573151690328125724}
   - component: {fileID: 6556052836947673}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Quad (2)
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 5364803949657740408}
   - component: {fileID: 2861228925036942120}
   - component: {fileID: 1667865045350920548}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Quad
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -169,7 +169,7 @@ GameObject:
   - component: {fileID: 5582799155841231266}
   - component: {fileID: 107700806923936450}
   - component: {fileID: 3417311567515930613}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Quad (1)
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -248,7 +248,7 @@ GameObject:
   - component: {fileID: 7256333555795088408}
   - component: {fileID: 6384690151527866867}
   - component: {fileID: 8930050421128870906}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Quad
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -327,7 +327,7 @@ GameObject:
   - component: {fileID: 6256090559880854698}
   - component: {fileID: 2844899039713441137}
   - component: {fileID: 4433057717770240425}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Seeker
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -366,10 +366,15 @@ MonoBehaviour:
   collisionMask:
     serializedVersion: 2
     m_Bits: 3328
+  groundingMask:
+    serializedVersion: 2
+    m_Bits: 3072
   range: 12.5
   maxSpeed: 30
   acceleration: 60
   drag: 1
+  bottomLeft: {x: -0.5, y: -0.5, z: 0}
+  bottomRight: {x: 0.5, y: -0.5, z: 0}
 --- !u!60 &4433057717770240425
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -413,7 +418,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6222642643292148606}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: GameObject
   m_TagString: Enemy
   m_Icon: {fileID: 0}

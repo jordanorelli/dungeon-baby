@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3308651302778791220}
   - component: {fileID: 2621347461924576989}
   - component: {fileID: 8618276481035816493}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: TouchHazard
   m_TagString: Untagged
   m_Icon: {fileID: 0}

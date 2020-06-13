@@ -4,10 +4,14 @@ using UnityEngine;
 
 public class Seeker : MonoBehaviour {
     public LayerMask collisionMask;
+    public LayerMask groundingMask;
     public float range = 3.0f;
     public float maxSpeed = 3.0f; // units per second
     public float acceleration = 3.0f; // increase in velocity per second
     public float drag = 1.0f;
+    public Vector3 bottomLeft;
+    public Vector3 bottomRight;
+    private float skinDepth = 0.01f;
 
     private Vector3 pivot;
     private Vector3 leftMax;
@@ -29,7 +33,38 @@ public class Seeker : MonoBehaviour {
     void Update() {
         detectPlayer();
         velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
-        transform.position = transform.position + velocity * Time.deltaTime;
+        Vector3 next = transform.position + velocity * Time.deltaTime;
+        Debug.LogFormat("{0} x velocity: {1}", gameObject.name, velocity.x);
+
+        if (velocity.x >= 0) {
+            // if we're moving right, cast a ray from the bottom right corner to make sure we don't go over the ledge
+            RaycastHit2D hitRight = Physics2D.Raycast(transform.position + bottomRight + skinDepth * Vector3.up, Vector2.down, Mathf.Infinity, groundingMask);
+            RaycastHit2D nextHitRight = Physics2D.Raycast(next + bottomRight + skinDepth * Vector3.up, Vector2.down, Mathf.Infinity, groundingMask);
+            hitRight.distance -= skinDepth;
+            nextHitRight.distance -= skinDepth;
+            Debug.LogFormat("Hit Right: {0} Dist: {1} Next Hit Right: {2} Dist: {3}", hitRight, hitRight.distance, nextHitRight, nextHitRight.distance);
+            // this is gross but because we're only placing blocks in unit
+            // increments we can avoid rounding comparison errors by just
+            // checking if the difference between this height and the next
+            // height is less than half our minimum delta that we use in the
+            // levels. This is faster than figuring out a real solution.
+            if (Mathf.Abs(nextHitRight.distance - hitRight.distance) < 0.5f) {
+                transform.position = next;
+            } else {
+                velocity.x = 0;
+            }
+        } else {
+            // if we're moving left, cast a ray from the bottom left corner to make sure we don't go over the ledge
+            RaycastHit2D hitLeft = Physics2D.Raycast(transform.position + bottomLeft + skinDepth * Vector3.up, Vector2.down, Mathf.Infinity, groundingMask);
+            RaycastHit2D nextHitLeft = Physics2D.Raycast(next + bottomLeft + skinDepth * Vector3.up, Vector2.down, Mathf.Infinity, groundingMask);
+            hitLeft.distance -= skinDepth;
+            nextHitLeft.distance -= skinDepth;
+            if (Mathf.Abs(hitLeft.distance - nextHitLeft.distance) < 0.5f) {
+                transform.position = next;
+            } else {
+                velocity.x = 0;
+            }
+        }
     }
 
     private void detectPlayer() {
