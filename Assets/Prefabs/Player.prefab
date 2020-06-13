@@ -144,24 +144,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   jumpHeight: 4
-  maxForwardJumpBoost: 2.5
-  timeToJumpApex: 0.4
+  maxForwardJumpBoost: 2
+  timeToJumpApex: 0.25
   lastDashTime: 0
   dashTime: 0.125
   dashSpeed: 50
   dashCooldown: 1.25
-  moveSpeed: 6
-  maxFallSpeed: -20
+  moveSpeed: 12
+  maxFallSpeed: -40
   timeToMaxRunSpeed: 0.15
-  timeToMaxAirmoveSpeed: 0.025
-  maxApexTime: 0.05
-  coyoteTime: 0.1
-  maxJumps: 2
+  timeToMaxAirmoveSpeed: 0.25
+  maxApexTime: 0.3
+  coyoteTime: 0.15
+  maxJumps: 1
   tracerPrefab: {fileID: 2438817463505096557, guid: 76ce4ec4aba832343abb5a3c19e66b7c,
     type: 3}
   leftDashIndicator: {fileID: 4630466111644168105}
   rightDashIndicator: {fileID: 3504191955490326659}
-  jumpState: 0
+  jumpState: 5
   jumpDirection: 0
   jumpCount: 0
   apexTime: 0

@@ -63,7 +63,7 @@ public class CameraController : MonoBehaviour {
     }
 
     void OnDrawGizmosSelected() {
-        setupFrame();
+        // setupFrame();
         Gizmos.color = Color.white;
 
         Gizmos.DrawLine(frame.topLeft, frame.topRight);
@@ -93,10 +93,10 @@ public class CameraController : MonoBehaviour {
         int height = Screen.height;
         int width = Screen.width;
 
-        frame.topLeft = cam.ScreenToWorldPoint(new Vector3(width / 2 - width / 9, height / 2 + height / 3, 1));
-        frame.topRight = cam.ScreenToWorldPoint(new Vector3(width / 2 + width / 9, height / 2 + height / 3, 1));
-        frame.bottomLeft = cam.ScreenToWorldPoint(new Vector3(width / 2 - width / 9, height / 2 - height / 3, 1));
-        frame.bottomRight = cam.ScreenToWorldPoint(new Vector3(width / 2 + width / 9, height / 2 - height / 3, 1));
+        frame.topLeft = cam.ScreenToWorldPoint(new Vector3(width / 2 - width / 9, height / 2 + height / 5, 1));
+        frame.topRight = cam.ScreenToWorldPoint(new Vector3(width / 2 + width / 9, height / 2 + height / 5, 1));
+        frame.bottomLeft = cam.ScreenToWorldPoint(new Vector3(width / 2 - width / 9, height / 2 - height / 5, 1));
+        frame.bottomRight = cam.ScreenToWorldPoint(new Vector3(width / 2 + width / 9, height / 2 - height / 5, 1));
     }
 
     struct Frame {
