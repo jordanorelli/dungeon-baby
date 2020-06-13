@@ -7,6 +7,7 @@ public class CameraController : MonoBehaviour {
     public Transform player;
     public float maxAcceleration = 1f;
     public float maxVelocity = 10f;
+    public Light light;
 
     private Frame frame;
 
@@ -56,6 +57,7 @@ public class CameraController : MonoBehaviour {
         }
 
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothTime);
+        light.transform.LookAt(player.transform, Vector3.up);
 
         // lastPosition = transform.position;
         // lastVelocity = velocity;
