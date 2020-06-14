@@ -34,7 +34,6 @@ public class Seeker : MonoBehaviour {
         detectPlayer();
         velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
         Vector3 next = transform.position + velocity * Time.deltaTime;
-        Debug.LogFormat("{0} x velocity: {1}", gameObject.name, velocity.x);
 
         if (velocity.x >= 0) {
             // if we're moving right, cast a ray from the bottom right corner to make sure we don't go over the ledge
@@ -42,7 +41,6 @@ public class Seeker : MonoBehaviour {
             RaycastHit2D nextHitRight = Physics2D.Raycast(next + bottomRight + skinDepth * Vector3.up, Vector2.down, Mathf.Infinity, groundingMask);
             hitRight.distance -= skinDepth;
             nextHitRight.distance -= skinDepth;
-            Debug.LogFormat("Hit Right: {0} Dist: {1} Next Hit Right: {2} Dist: {3}", hitRight, hitRight.distance, nextHitRight, nextHitRight.distance);
             // this is gross but because we're only placing blocks in unit
             // increments we can avoid rounding comparison errors by just
             // checking if the difference between this height and the next
@@ -68,16 +66,21 @@ public class Seeker : MonoBehaviour {
     }
 
     private void detectPlayer() {
+        bool detected = false;
         if (detectPlayer(transform.position + Vector3.left * 1.22f, Vector3.left)) {
             velocity += Vector3.left * acceleration * Time.deltaTime;
+            detected = true;
         }
         if (detectPlayer(transform.position + Vector3.right * 1.22f, Vector3.right)) {
             velocity += Vector3.right * acceleration * Time.deltaTime;
+            detected = true;
+        }
+        if (!detected) {
+            velocity.x = 0;
         }
     }
 
     private bool detectPlayer(Vector3 start, Vector3 dir) {
-        Debug.LogFormat("start: {0} dir: {1}", start, dir);
         RaycastHit2D hit = Physics2D.Raycast(start, dir, range, collisionMask);
         if (hit) {
             if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Player")) {

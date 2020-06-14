@@ -57,7 +57,9 @@ public class CameraController : MonoBehaviour {
         }
 
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothTime);
-        light.transform.LookAt(player.transform, Vector3.up);
+        if (light) {
+            light.transform.LookAt(player.transform, Vector3.up);
+        }
 
         // lastPosition = transform.position;
         // lastVelocity = velocity;

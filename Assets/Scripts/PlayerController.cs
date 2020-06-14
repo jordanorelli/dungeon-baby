@@ -44,10 +44,26 @@ public class PlayerController : MonoBehaviour {
     private Vector3 velocity;
     private MoveController moveController;
     private float velocityXSmoothing;
+    private GameObject tracers;
 
     void Start() {
+        if (!tracers) {
+            tracers = new GameObject();
+            tracers.name = "Player Debug Tracers";
+        }
         // Debug.Log("Creating new controls in Start!");
         // controls = new PlayerControls();
+        GameObject[] checkpoints = GameObject.FindGameObjectsWithTag("Checkpoint");
+        foreach (GameObject cp in checkpoints) {
+            if (cp.GetComponent<Checkpoint>().isLastCheckpoint) {
+                transform.position = new Vector3(
+                    cp.transform.position.x,
+                    cp.transform.position.y,
+                    0f
+                );
+            }
+        }
+
         setJumpState(JumpState.Falling);
         moveController = GetComponent<MoveController>();
         gravity = -(2* jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
@@ -71,6 +87,7 @@ public class PlayerController : MonoBehaviour {
         // Debug.LogFormat("Jump Phase: {0} Triggered: {1}", jumpPhase, jumpTriggered);
 
         GameObject tracerObj = Instantiate(tracerPrefab, transform.position, Quaternion.identity);
+        tracerObj.transform.parent = tracers.transform;
         TracerDot tracer = tracerObj.GetComponent<TracerDot>();
 
         Vector2 input = controls.Gameplay.Move.ReadValue<Vector2>();
@@ -363,15 +380,13 @@ public class PlayerController : MonoBehaviour {
         if (other == null) {
             return;
         }
-        Debug.Log(other);
 
         TouchHazard hazard = other.GetComponent<TouchHazard>();
         if (hazard) {
             if (jumpState == JumpState.Dash) {
                 Destroy(hazard.gameObject);
             } else {
-                SceneManager.LoadScene( SceneManager.GetActiveScene().buildIndex ) ;
-                // Destroy(gameObject);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex) ;
             }
         }
 
@@ -384,7 +399,7 @@ public class PlayerController : MonoBehaviour {
 
         Seeker seeker = other.GetComponent<Seeker>();
         if (seeker) {
-            SceneManager.LoadScene( SceneManager.GetActiveScene().buildIndex ) ;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex) ;
         }
     }
 
@@ -406,12 +421,6 @@ public class PlayerController : MonoBehaviour {
     }
 
     void OnDestroy() {
-    }
-
-    void OnCollisionEnter(Collision other) {
-    }
-
-    void OnTriggerEnter(Collider other) {
     }
 
     bool dash() {
