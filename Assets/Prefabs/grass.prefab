@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3145259671590046870}
   - component: {fileID: 9136160893208226110}
   - component: {fileID: 815455091500221479}
+  - component: {fileID: 2058777641646934996}
   m_Layer: 0
   m_Name: grass
   m_TagString: Untagged
@@ -119,3 +120,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86848c7dd648f6c4aa0f53b506d13a0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isEaten: 0
+  uneatenMesh: {fileID: 8254687373856176130, guid: a13ea5fe58adbd442985df8e71d11107,
+    type: 3}
+  eatenMesh: {fileID: 6081153864048940075, guid: 92e1aa06c8c3cab4ea96af6738f4ef52,
+    type: 3}
+--- !u!50 &2058777641646934996
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3718534089451419722}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 7
