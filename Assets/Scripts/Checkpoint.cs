@@ -17,7 +17,6 @@ public class Checkpoint : MonoBehaviour {
     }
 
     void OnTriggerEnter2D(Collider2D collider) {
-        Debug.LogFormat("Checkpoint trigger collided 2D with: {0}", collider);
         if (collider.CompareTag("Player")) {
             Debug.LogFormat("Checkpoint was hit by player");
             GameObject[] checkpoints = GameObject.FindGameObjectsWithTag("Checkpoint");
